@@ -28,18 +28,21 @@ public class ProductController {
     // Get a single product by ID
     @GetMapping("/{id}")
     public ResponseEntity<Product> getProductById(@PathVariable String id) {
-        //This should really be in a Service class, remember single responsibility rule
         Optional<Product> product = productRepository.findById(id);
-        return product.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+        if (product.isPresent()) {
+            return ResponseEntity.ok(product.get());
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     // Add a new product
     @PostMapping
     public ResponseEntity<Product> createProduct(@Valid @RequestBody Product product) {
-        //This should really be in a Service class, remember single responsibility rule
-        if (productRepository.existsById(product.getId())) {
-            return ResponseEntity.status(409).body(null); // Conflict if product already exists
-        }
+        // Ensure id is null so MongoDB generates it
+        product.setId(null);  // MongoDB will assign an id automatically
+
+        // Save the new product
         Product savedProduct = productRepository.save(product);
         return ResponseEntity.ok(savedProduct);
     }
@@ -47,7 +50,6 @@ public class ProductController {
     // Update an existing product
     @PutMapping("/{id}")
     public ResponseEntity<Product> updateProduct(@PathVariable String id, @Valid @RequestBody Product updatedProduct) {
-        //This should really be in a Service class, remember single responsibility rule
         Optional<Product> product = productRepository.findById(id);
         if (product.isPresent()) {
             Product existingProduct = product.get();
@@ -65,7 +67,6 @@ public class ProductController {
     // Delete a product by ID
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProduct(@PathVariable String id) {
-        //This should really be in a Service class, remember single responsibility rule
         if (productRepository.existsById(id)) {
             productRepository.deleteById(id);
             return ResponseEntity.noContent().build(); // 204 No Content
